@@ -10,7 +10,7 @@ const login = {
   }
 }
 
-const signup ={
+const signup = {
   body: {
     email: Joi.string().email().required(),
     password: Joi.string().required(),

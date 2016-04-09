@@ -48,7 +48,7 @@ describe('validate body', function() {
 
   describe('when the request has a missing item in payload', function() {
 
-    it('should return a 400 ok response and a single error', function(done) {
+    it('should return a 400 response and a single error', function(done) {
 
       var login = {
         email: 'andrew.keig@gmail.com',
@@ -61,8 +61,8 @@ describe('validate body', function() {
         .expect(400)
         .end(function(err, res) {
           res.body.errors.length.should.equal(1);
-          res.body.errors[0].messages.length.should.equal(2);
-          res.body.errors[0].types.length.should.equal(2);
+          res.body.errors[0].messages.length.should.equal(1);
+          res.body.errors[0].types.length.should.equal(1);
           done();
         });
     });
@@ -70,7 +70,7 @@ describe('validate body', function() {
 
   describe('when the request has multiple missing items in payload', function() {
 
-    it('should return a 400 ok response and two errors', function(done) {
+    it('should return a 400 response and two errors', function(done) {
 
       var login = {
         email: '',
@@ -83,10 +83,12 @@ describe('validate body', function() {
         .expect(400)
         .end(function(err, res) {
           res.body.errors.length.should.equal(2);
+          // email cant be empty, and not valid email
           res.body.errors[0].messages.length.should.equal(2);
           res.body.errors[0].types.length.should.equal(2);
-          res.body.errors[1].messages.length.should.equal(2);
-          res.body.errors[1].types.length.should.equal(2);
+          // password cant be empty
+          res.body.errors[1].messages.length.should.equal(1);
+          res.body.errors[1].types.length.should.equal(1);
           done();
         });
     });
@@ -94,7 +96,7 @@ describe('validate body', function() {
 
   describe('when the request has extra items in payload', function() {
 
-    it('should return a 400 ok response and one error', function(done) {
+    it('should return a 400 response and one error', function(done) {
 
       var login = {
         email: 'andrew.keig@gmail.com',

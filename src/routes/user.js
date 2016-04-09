@@ -3,21 +3,14 @@ import {
 } from 'express';
 import mssql from 'mssql';
 import validate from 'express-validation';
-import bunyan from 'bunyan';
 
 import db from '../db';
 import schema from '../validators/user';
+import logger from '../config/log';
 
 const connection = db.connection();
 
 var router = Router();
-
-var logger = bunyan.createLogger({
-  name: 'user',
-  serializers: {
-    err: bunyan.stdSerializers.err,
-  }
-});
 
 router.get('/login', (req, res, next) => {
   var request = new mssql.Request(connection);
@@ -57,7 +50,7 @@ router.post('/login', validate(schema.login), (req, res, next) => {
 });
 
 router.post('/signup', validate(schema.signup), (req, res, next) => {
-  logger.debug(req.body);
+  logger.user.debug(req.body);
   if (req.body.password != req.body.passwordMatch) {
     let error = new Error('Password does not match');
     error.status = 400;
@@ -89,7 +82,7 @@ router.post('/signup', validate(schema.signup), (req, res, next) => {
 
 // Error handler for user route. Pass the 'user' logger to the global error handlers
 router.use((err, req, res, next) => {
-  req.logger = logger;
+  req.logger = logger.user;
   return next(err);
 });
 

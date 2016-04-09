@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --harmony src/index.js --exec babel-node --presets es2015,stage-2",
+    "start": "nodemon --harmony src/index.js --exec babel-node",
     "build": "babel src --out-dir dist",
     "serve": "node dist/index.js",
     "test": "mocha --compilers js:babel-core/register --reporter spec"
@@ -17,14 +17,15 @@
     "babel-preset-stage-2": "^6.5.0",
     "mocha": "^2.4.5",
     "nodemon": "^1.9.1",
-    "request": "^2.70.0"
+    "request": "^2.70.0",
+    "should": "^8.3.0",
+    "supertest": "^1.2.0"
   },
   "dependencies": {
     "body-parser": "^1.15.0",
     "bunyan": "^1.8.0",
     "cors": "^2.7.1",
     "express": "^4.13.4",
-    "express-validation": "^0.5.0",
     "joi": "^8.0.5",
     "lodash": "^4.6.1",
     "mssql": "^3.1.2"
