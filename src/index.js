@@ -2,7 +2,7 @@ import http from 'http';
 import express from 'express';
 
 import expressConfig from './config/express';
-import db from './db';
+import db from './config/db';
 
 var app = express();
 app.server = http.createServer(app);

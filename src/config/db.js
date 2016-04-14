@@ -1,7 +1,7 @@
 import mssql from 'mssql';
-import config from './config/env/development';
+import env from './env/development';
 
-const connection = new mssql.Connection(config);
+const connection = new mssql.Connection(env.db);
 
 export default {
   connect: () => { return connection.connect()},
