@@ -21,6 +21,13 @@ const survey = bunyan.createLogger({
   }
 });
 
+const question = bunyan.createLogger({
+  name: 'question',
+  serializers: {
+    err: bunyan.stdSerializers.err,
+  }
+});
+
 function reqSerializer(req) {
   return {
     method: req.method,
@@ -33,5 +40,6 @@ function reqSerializer(req) {
 export default {
   app,
   user,
-  survey
+  survey,
+  question
 }

@@ -39,7 +39,7 @@ router.post('/login', validate(schema.login), (req, res, next) => {
 				error.status = 401;
 				return next(error);
 			}
-			let token = jwt.sign(recordset[0].ProfileiD, env.jwt.secret, {
+			let token = jwt.sign({id: recordset[0].ProfileiD}, env.jwt.secret, {
 				expiresIn: "1d"
 			});
 			let user = {
@@ -96,7 +96,7 @@ router.get('/loops', middleware.verifyToken, validate(schema.loop), (req, res, n
 	        WHERE P.ProfileId = @id`)
 		.then(() => {
 			return ps.execute({
-				id: req.token
+				id: req.id
 			})
 		})
 		.then((recordset) => {

@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 
 import routes from './routes';
 import errorHandlers from './errorHandlers';
+import refData from '../utils/refData'
 import logger from './log';
 
 export default function express(app) {
@@ -15,6 +16,8 @@ export default function express(app) {
     logger.app.info({req});
     next();
   });
+  
+  refData.initRefData();
   
   routes(app);
   errorHandlers(app);
