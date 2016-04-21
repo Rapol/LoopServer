@@ -14,7 +14,7 @@ function verifyToken(req, res, next){
         return res.status(401).json({ message: 'Failed to authenticate token.' });    
       } else {
         // Save token into the request
-        req.id = decoded.id;
+        req.profileId = decoded.profileId;
         next();
       }
     });

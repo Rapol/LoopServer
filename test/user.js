@@ -15,7 +15,7 @@ describe('validate body', function() {
       };
 
       request(url)
-        .post('/login')
+        .post('users/login')
         .send(login)
         .expect(401)
         .end(function(err, res) {
@@ -35,7 +35,7 @@ describe('validate body', function() {
       };
 
       request(url)
-        .post('/login')
+        .post('users/login')
         .send(login)
         .expect(400)
         .end(function(err, res) {
@@ -56,7 +56,7 @@ describe('validate body', function() {
       };
 
       request(url)
-        .post('/login')
+        .post('users/login')
         .send(login)
         .expect(400)
         .end(function(err, res) {
@@ -78,7 +78,7 @@ describe('validate body', function() {
       };
 
       request(url)
-        .post('/login')
+        .post('users/login')
         .send(login)
         .expect(400)
         .end(function(err, res) {
@@ -105,7 +105,7 @@ describe('validate body', function() {
       };
 
       request(url)
-        .post('/login')
+        .post('users/login')
         .send(login)
         .expect(400)
         .end(function(err, res) {

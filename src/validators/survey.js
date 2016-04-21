@@ -42,6 +42,13 @@ const survey = {
   }
 }
 
+const getSurvey = {
+  params:{
+    surveyId: Joi.number().positive().required()
+  }
+}
+
 export default {
-  survey
+  survey,
+  getSurvey
 };

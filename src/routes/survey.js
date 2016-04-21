@@ -15,21 +15,19 @@ const connection = db.connection();
 var router = Router();
 const SURVEY_PER_PAGE = 5;
 
+// GET SURVEYS
 router.get('/', (req, res, next) => {
 	let page = (req.query.page > 0 ? req.query.page : 0) * SURVEY_PER_PAGE;
-	var request = new sql.Request(connection);
-// 	request.query(`SELECT DISTINCT S.SURVEYID,SURVEYNAME, DESCRIPTION,CREATEDON,QUESTIONTEXT
-//                   FROM DBO.SURVEY S JOIN DBO.QUESTIONHEADER Q ON S.SURVEYID = Q.SURVEYID 
-//                   ORDER BY S.SURVEYID OFFSET ${page} ROWS FETCH NEXT ${SURVEY_PER_PAGE} ROWS ONLY`)
-	request.query(`SELECT S.SURVEYID,SURVEYNAME, DESCRIPTION,CREATEDON
-                  FROM DBO.SURVEY S
-                  ORDER BY S.SURVEYID OFFSET ${page} ROWS FETCH NEXT ${SURVEY_PER_PAGE} ROWS ONLY`)
+	let request = new sql.Request(connection);
+	request.query(`SELECT surveyId, surveyName, description, createdOn
+                  FROM DBO.SURVEY
+                  ORDER BY surveyId OFFSET ${page} ROWS FETCH NEXT ${SURVEY_PER_PAGE} ROWS ONLY`)
 		.then((recordset) => {
 			let result = recordset.map((survey) => {
 				return {
-					name: survey.SURVEYNAME,
-					description: survey.DESCRIPTION,
-					createdOn: survey.CREATEDON,
+					name: survey.surveyName,
+					description: survey.description,
+					createdOn: survey.createdOn,
 					questionTitle: survey.QUESTIONTEXT
 				}
 			});
@@ -39,17 +37,44 @@ router.get('/', (req, res, next) => {
 		});
 });
 
-router.post('/', middleware.verifyToken, validate(schema.survey), (req, res, next) => {
+// GET A SURVEY
+router.get('/:surveyId', validate(schema.getSurvey), (req, res, next) => {
+	let request = new sql.Request(connection);
+	request.query(`SELECT surveyId, surveyName, description, createdOn FROM DBO.SURVEY WHERE surveyId = ${req.params.surveyId}`)
+		.then((recordset) => {
+			if (recordset.length == 0) {
+				res.sendStatus(404);
+			}
+			res.send(recordset[0]);
+		}).catch((err) => {
+			return next(err)
+		});
+});
 
-	// Check question format
+// GET A SURVEY'S QUESTIONS
+router.get('/:surveyId/questions', validate(schema.getSurvey), (req, res, next) => {
+	let request = new sql.Request(connection);
+	request.input('CurrentSurveyID', sql.Int, req.params.surveyId);
+	request.execute('DBO.SurveyQuestions_Load')
+		.then((recordset) => {
+			res.send(recordset);
+		}).catch((err) => {
+			return next(err)
+		});
+});
+
+// POST SURVEY (CREATE)
+router.post('/', middleware.verifyToken, validate(schema.survey), (req, res, next) => {
+	let surveyId = null;
+	// Check questions format
 	checkQuestions(req.body.questions);
-	
-	createSurvey(req.id, req.body)
+	createSurvey(req.profileId, req.body)
 		.then((recordset) => {
 			logger.survey.info("Survey Created with id: ", recordset[0][0]);
+			surveyId = recordset[0][0].SurveyID;
 			// For all questions create a promise for the request to the db
 			return req.body.questions.map((question) => {
-				return createQuestion(recordset[0][0].SurveyID, req.id, question);
+				return createQuestion(surveyId, req.profileId, question);
 			});
 		})
 		.then((promises) => {
@@ -58,7 +83,9 @@ router.post('/', middleware.verifyToken, validate(schema.survey), (req, res, nex
 		})
 		.then((questionResult) => {
 			logger.survey.info(questionResult, "Question promises result:");
-			res.send();
+			res.send({
+				surveyId
+			});
 		})
 		.catch((err) => {
 			return next(err);
@@ -95,7 +122,7 @@ function createSurvey(profileId, survey) {
 	});
 
 	let attributeTable = new sql.Table();
-	
+
 	attributeTable.columns.add('SurveyID', sql.Int, {
 		nullable: true
 	});

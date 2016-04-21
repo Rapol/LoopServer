@@ -16,7 +16,7 @@ const connection = db.connection();
 var router = Router();
 
 router.get('/', (req, res, next) => {
-	var request = new sql.Request(connection);
+	let request = new sql.Request(connection);
 	request.query('select * from dbo.profile').then((recordset) => {
 		res.send(recordset);
 	}).catch((err) => {
@@ -25,21 +25,17 @@ router.get('/', (req, res, next) => {
 });
 
 router.post('/login', validate(schema.login), (req, res, next) => {
-	var ps = new sql.PreparedStatement(connection);
-	ps.input('EmailAddress', sql.VarChar);
-	ps.prepare('SELECT ProfileiD, FirstName, LastName, Password FROM DBO.PROFILE WHERE EmailAddress = @EmailAddress')
-		.then(() => {
-			return ps.execute({
-				EmailAddress: req.body.email
-			})
-		})
+	let request = new sql.Request(connection);
+	request.query(`SELECT ProfileiD, FirstName, LastName, Password FROM DBO.PROFILE WHERE EmailAddress = '${req.body.email}'`)
 		.then((recordset) => {
 			if (recordset.length == 0 || recordset[0].Password != req.body.password) {
 				let error = new Error('Username or password is incorrect.');
 				error.status = 401;
 				return next(error);
 			}
-			let token = jwt.sign({id: recordset[0].ProfileiD}, env.jwt.secret, {
+			let token = jwt.sign({
+				profileId: recordset[0].ProfileiD
+			}, env.jwt.secret, {
 				expiresIn: "1d"
 			});
 			let user = {
@@ -48,7 +44,6 @@ router.post('/login', validate(schema.login), (req, res, next) => {
 				token: token
 			}
 			res.send(user);
-			return ps.unprepare();
 		})
 		.catch((err) => {
 			return next(err);
@@ -62,14 +57,14 @@ router.post('/signup', validate(schema.signup), (req, res, next) => {
 		return next(error);
 	}
 
-	var request = new sql.Request(connection);
+	let request = new sql.Request(connection);
 	request.input('Fname', sql.VarChar, req.body.firstName);
 	request.input('LName', sql.VarChar, req.body.lastName);
 	request.input('Email', sql.VarChar, req.body.email);
 	request.input('pswd', sql.VarChar, req.body.password);
 	request.execute('DOB.PROFILE_CREATE')
 		.then((recordsets) => {
-		// TODO: check if proc returns profileId
+			// TODO: check if proc returns profileId
 			res.send({
 				email: req.body.email,
 				firstName: req.body.firstName,
@@ -87,19 +82,16 @@ router.post('/signup', validate(schema.signup), (req, res, next) => {
 });
 
 router.get('/loops', middleware.verifyToken, validate(schema.loop), (req, res, next) => {
-	var ps = new sql.PreparedStatement(connection);
-	ps.input('id', sql.Int);
-	ps.prepare(`SELECT L.LoopId, Name FROM DBO.PROFILE AS P JOIN DBO.LoopMembership AS M ON
+	let request = new sql.Request(connection);
+	request.query(`SELECT L.LoopId, Name FROM DBO.PROFILE AS P JOIN DBO.LoopMembership AS M ON
 	        P.ProfileId = M.ProfileId
 	        JOIN DBO.LOOP AS L ON
 	        M.LoopId = L.LoopId
-	        WHERE P.ProfileId = @id`)
-		.then(() => {
-			return ps.execute({
-				id: req.id
-			})
-		})
+	        WHERE P.ProfileId = ${req.profileId}`)
 		.then((recordset) => {
+			if (recordset.length == 0) {
+				res.sendStatus(404);
+			}
 			res.send(recordset);
 		})
 		.catch((err) => {
@@ -108,7 +100,7 @@ router.get('/loops', middleware.verifyToken, validate(schema.loop), (req, res, n
 });
 
 router.get('/attributes', (req, res, next) => {
-	var ps = new sql.Request(connection);
+	let ps = new sql.Request(connection);
 	ps.query("SELECT * FROM DBO.ProfileAttribute")
 		.then((recordset) => {
 			res.send(recordset);
