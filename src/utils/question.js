@@ -2,7 +2,7 @@ import constants from './constants';
 import refData from './refData';
 
 function getQuestionTypeId(questionType, index) {
-  let typeId = refData.getQuestionTypes()[constants.QUESTION_TYPES[questionType]]
+  let typeId = refData.getQuestionTypes()[constants.QUESTION_TYPES_REQUEST[questionType]]
   if (!typeId) {
     let error = new Error('Invalid Question Type in question ' + index);
     error.status = 400;
@@ -71,7 +71,30 @@ function flattenChoices(choices) {
   return choices.map((choice) => choice.text).toString();
 }
 
+function getAttributeValue(name, value){
+  if(name == "Required" || name == "Randomize"){
+    return value == "true";
+  }
+  else if(name == "Choices"){
+    return value.split(",").map((choice) => {
+      return {
+        text: choice
+      }
+    });
+  }
+  else if(name == "Text_Char_Min" || name == "Text_Char_Max" || name == "NumberBox_Min" || name == "NumberBox_Max"){
+    return parseInt(value);
+  }
+  else if(name.split("_")[0] == "Scale"){
+    return {
+      name: name.split("_")[1],
+      steps: value.split(",")
+    }
+  }
+}
+
 export default {
   getQuestionTypeId,
-  getQuestionAttributesInfo
+  getQuestionAttributesInfo,
+  getAttributeValue
 }

@@ -3,6 +3,7 @@ import express from 'express';
 
 import expressConfig from './config/express';
 import db from './config/db';
+import logger from './config/log';
 
 var app = express();
 app.server = http.createServer(app);
@@ -16,4 +17,4 @@ db.connect()
     expressConfig(app);
 
   })
-  .catch((err) => console.log(err));
+  .catch((err) => logger.app.error(err));

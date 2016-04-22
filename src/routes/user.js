@@ -43,6 +43,9 @@ router.post('/login', validate(schema.login), (req, res, next) => {
 				lastName: recordset[0].LastName,
 				token: token
 			}
+			logger.user.info({
+				user
+			}, "User logged in succesfully");
 			res.send(user);
 		})
 		.catch((err) => {
@@ -65,11 +68,15 @@ router.post('/signup', validate(schema.signup), (req, res, next) => {
 	request.execute('DOB.PROFILE_CREATE')
 		.then((recordsets) => {
 			// TODO: check if proc returns profileId
-			res.send({
+			let user = {
 				email: req.body.email,
 				firstName: req.body.firstName,
 				lastName: req.body.lastName
-			});
+			}
+			res.send(user);
+			logger.user.info({
+				user
+			}, "User signup succesfully");
 		})
 		.catch((err) => {
 			if (err.number == 2627) {
@@ -90,7 +97,7 @@ router.get('/loops', middleware.verifyToken, validate(schema.loop), (req, res, n
 	        WHERE P.ProfileId = ${req.profileId}`)
 		.then((recordset) => {
 			if (recordset.length == 0) {
-				res.sendStatus(404);
+				return res.sendStatus(404);
 			}
 			res.send(recordset);
 		})

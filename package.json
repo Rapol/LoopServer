@@ -7,7 +7,9 @@
     "start": "nodemon --harmony src/index.js --exec babel-node | bunyan -l DEBUG",
     "build": "babel src --out-dir dist",
     "serve": "pm2 start dist/index.js --name loop",
-    "test": "mocha --compilers js:babel-core/register --reporter spec"
+    "test": "mocha --compilers js:babel-core/register --reporter spec",
+    "log": "bunyan -l TRACE ./log/app.log | less",
+    "tail": "bunyan -l TRACE ./log/app.log | tail -200 | less"
   },
   "author": "",
   "license": "ISC",

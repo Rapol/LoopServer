@@ -1,10 +1,19 @@
 // map questionType in the request to the question type map in refData
-const QUESTION_TYPES = {
+const QUESTION_TYPES_REQUEST = {
   multipleChoice: 'Multiple Choice',
   textBox: 'Text Box',
   sliderScale: 'Slider Scale',
   ranking: 'Ranking',
   numberBox: 'Number Box'
+}
+
+// Maps DB type names to front end friendly names
+const QUESTION_TYPES_DB = {
+  'Multiple Choice': 'multipleChoice',
+  'Text Box': 'textBox',
+  'Slider Scale': 'sliderScale',
+  'Ranking': 'ranking',
+  'Number Box': 'numberBox'
 }
 
 // maps question attribute in refData with the properties in the request
@@ -22,6 +31,7 @@ const QUESTION_ATTRIBUTES = {
 }
 
 export default {
-  QUESTION_TYPES,
+  QUESTION_TYPES_REQUEST,
+  QUESTION_TYPES_DB,
   QUESTION_ATTRIBUTES
 }

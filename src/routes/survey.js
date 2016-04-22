@@ -9,6 +9,7 @@ import middleware from '../config/middleware';
 import schema from '../validators/survey';
 import logger from '../config/log';
 import questionUtils from '../utils/question';
+import constants from '../utils/constants';
 
 const connection = db.connection();
 
@@ -26,6 +27,7 @@ router.get('/', (req, res, next) => {
 			let result = recordset.map((survey) => {
 				return {
 					name: survey.surveyName,
+					id: survey.surveyId,
 					description: survey.description,
 					createdOn: survey.createdOn,
 					questionTitle: survey.QUESTIONTEXT
@@ -43,7 +45,7 @@ router.get('/:surveyId', validate(schema.getSurvey), (req, res, next) => {
 	request.query(`SELECT surveyId, surveyName, description, createdOn FROM DBO.SURVEY WHERE surveyId = ${req.params.surveyId}`)
 		.then((recordset) => {
 			if (recordset.length == 0) {
-				res.sendStatus(404);
+				return res.sendStatus(404);
 			}
 			res.send(recordset[0]);
 		}).catch((err) => {
@@ -57,7 +59,34 @@ router.get('/:surveyId/questions', validate(schema.getSurvey), (req, res, next) 
 	request.input('CurrentSurveyID', sql.Int, req.params.surveyId);
 	request.execute('DBO.SurveyQuestions_Load')
 		.then((recordset) => {
-			res.send(recordset);
+			if (recordset[0].length == 0 || recordset[1].length == 0) {
+				return res.sendStatus(404);
+			}
+			let questions = [];
+			let lastId = null;
+			let currentQuestion = null;
+			recordset[1].forEach((questionAttribute) => {
+				// Found a new question
+				if (lastId != questionAttribute.QuestionID) {
+					// Create Question and push it to the array of questions
+					currentQuestion = {};
+					questions.push(currentQuestion);
+					lastId = questionAttribute.QuestionID;
+					// Set Question Type and title for the question
+					currentQuestion.questionType = constants.QUESTION_TYPES_DB[questionAttribute.QuestionTypeName];
+					currentQuestion.title = questionAttribute.QuestionText;
+				}
+				// Set attribute property and its value
+				currentQuestion[constants.QUESTION_ATTRIBUTES[questionAttribute.AttributeName]] = questionUtils.getAttributeValue(questionAttribute.AttributeName, questionAttribute.QuestionAttributeValue);
+			});
+		var surveyDetails = recordset[0][0];
+			res.send({
+				name: surveyDetails.SurveyName,
+				description: surveyDetails.Description,
+				createdOn: surveyDetails.CreatedOn,
+				createdBy: surveyDetails.CreatedByName,
+				questions
+			});
 		}).catch((err) => {
 			return next(err)
 		});
@@ -70,11 +99,11 @@ router.post('/', middleware.verifyToken, validate(schema.survey), (req, res, nex
 	checkQuestions(req.body.questions);
 	createSurvey(req.profileId, req.body)
 		.then((recordset) => {
-			logger.survey.info("Survey Created with id: ", recordset[0][0]);
+			logger.survey.debug("Survey Created with id: ", recordset[0][0]);
 			surveyId = recordset[0][0].SurveyID;
 			// For all questions create a promise for the request to the db
-			return req.body.questions.map((question) => {
-				return createQuestion(surveyId, req.profileId, question);
+			return req.body.questions.map((question, index) => {
+				return createQuestion(surveyId, req.profileId, question, index);
 			});
 		})
 		.then((promises) => {
@@ -82,7 +111,7 @@ router.post('/', middleware.verifyToken, validate(schema.survey), (req, res, nex
 			return Promise.all(promises);
 		})
 		.then((questionResult) => {
-			logger.survey.info(questionResult, "Question promises result:");
+			logger.survey.debug({questionResult}, "Question promises result:");
 			res.send({
 				surveyId
 			});
@@ -101,7 +130,7 @@ router.use((err, req, res, next) => {
 
 // Create or Edit survey
 function createSurvey(profileId, survey) {
-	logger.survey.info(survey, "Creating survey:");
+	logger.survey.info({survey}, "Creating survey:");
 	// Its a new survey, set it to null
 	if (survey.surveyId === undefined) {
 		logger.survey.debug("Survey Id is null");
@@ -149,8 +178,8 @@ function checkQuestions(questions) {
 	});
 }
 
-function createQuestion(surveyId, profileId, question) {
-	logger.survey.info(question, "Creating question:");
+function createQuestion(surveyId, profileId, question, index) {
+	logger.survey.info({question}, "Creating question:");
 	if (question.questionId === undefined) {
 		logger.survey.debug("Question Id is null");
 		question.questionId = null;
@@ -172,6 +201,7 @@ function createQuestion(surveyId, profileId, question) {
 	request.input('SurveyID', sql.Int, surveyId);
 	request.input('QuestionTypeID', question.typeId);
 	request.input('QuestionText', sql.VarChar, question.title);
+	request.input('QuestionOrder', sql.Int, index);
 	request.input('QuestionDetailSet', questionDetails);
 	request.input('EditedBy', sql.Int, profileId);
 	return request.execute('DBO.Question_Save');
