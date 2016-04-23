@@ -1,32 +1,18 @@
 import {
   Router
 } from 'express';
-import sql from 'mssql';
 
-import db from '../config/db';
-import logger from '../config/log';
-import refData from '../utils/refData'
-
-const connection = db.connection();
+import questionService from '../services/question'
 
 var router = Router();
 
-router.get('/attributes', (req, res, next) => {
-	res.send(refData.getQuestionAttributes());
-});
+router.get('/attributes', questionService.getQuestionAttributes);
 
-router.get('/types', (req, res, next) => {
-	res.send(refData.getQuestionTypes());
-});
+router.get('/types', questionService.getQuestionTypes);
 
-router.get('/map', (req, res, next) => {
-	res.send(refData.getAttributeTypeMap());
-});
+router.get('/map', questionService.getAttributeTypeMap);
 
 // Error handler for question route
-router.use((err, req, res, next) => {
-	logger.question.error(err);
-	return next(err);
-});
+router.use(questionService.errorHandler);
 
 export default router;
