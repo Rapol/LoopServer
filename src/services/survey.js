@@ -13,7 +13,6 @@ import constants from '../utils/constants';
 
 const connection = db.connection();
 
-var router = Router();
 const SURVEY_PER_PAGE = 5;
 
 function getAll(req, res, next){

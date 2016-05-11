@@ -10,7 +10,7 @@ import logger from '../config/log';
 
 const connection = db.connection();
 
-function testRoute(req, res, next){
+function testRoute(req, res, next) {
 	let request = new sql.Request(connection);
 	request.query('select * from dbo.profile').then((recordset) => {
 		res.send(recordset);
@@ -19,7 +19,7 @@ function testRoute(req, res, next){
 	});
 }
 
-function login(req, res, next){
+function login(req, res, next) {
 	let request = new sql.Request(connection);
 	request.query(`SELECT ProfileiD, FirstName, LastName, Password FROM DBO.PROFILE WHERE EmailAddress = '${req.body.email}'`)
 		.then((recordset) => {
@@ -34,6 +34,7 @@ function login(req, res, next){
 				expiresIn: "1d"
 			});
 			let user = {
+				id: recordset[0].ProfileiD,
 				firstName: recordset[0].FirstName,
 				lastName: recordset[0].LastName,
 				token: token
@@ -48,7 +49,7 @@ function login(req, res, next){
 		});
 }
 
-function signUp(req, res, next){
+function signUp(req, res, next) {
 	if (req.body.password != req.body.confirmedPassword) {
 		let error = new Error('Password does not match');
 		error.status = 400;
@@ -83,13 +84,13 @@ function signUp(req, res, next){
 		});
 }
 
-function getLoops(req, res, next){
+function getLoops(req, res, next) {
 	let request = new sql.Request(connection);
 	request.query(`SELECT L.LoopId, Name FROM DBO.PROFILE AS P JOIN DBO.LoopMembership AS M ON
 	        P.ProfileId = M.ProfileId
 	        JOIN DBO.LOOP AS L ON
 	        M.LoopId = L.LoopId
-	        WHERE P.ProfileId = ${req.profileId}`)
+	        WHERE P.ProfileId = ${req.params.id}`)
 		.then((recordset) => {
 			if (recordset.length == 0) {
 				return res.sendStatus(404);
@@ -101,7 +102,23 @@ function getLoops(req, res, next){
 		});
 }
 
-function getAttributes(req, res, next){
+function getSurveys(req, res, next) {
+	let request = new sql.Request(connection);
+	request.query(`SELECT S.SurveyId, SurveyName, Description, CreatedOn FROM DBO.Survey AS S JOIN DBO.SurveyEditorMap AS E ON
+	        S.SurveyId = E.SurveyId
+	        WHERE E.ProfileId = ${req.params.id}`)
+		.then((recordset) => {
+			if (recordset.length == 0) {
+				return res.sendStatus(404);
+			}
+			res.send(recordset);
+		})
+		.catch((err) => {
+			return next(err)
+		});
+}
+
+function getAttributes(req, res, next) {
 	let ps = new sql.Request(connection);
 	ps.query("SELECT * FROM DBO.ProfileAttribute")
 		.then((recordset) => {
@@ -112,7 +129,7 @@ function getAttributes(req, res, next){
 		});
 }
 
-function errorHandler(err, req, res, next){
+function errorHandler(err, req, res, next) {
 	logger.user.error(err);
 	return next(err);
 }
@@ -123,5 +140,6 @@ export default {
 	signUp,
 	getLoops,
 	getAttributes,
+	getSurveys,
 	errorHandler
 }
