@@ -53,7 +53,7 @@ function getQuestionAttributesInfo(question, index) {
           scaleRepeated = true;
           attributeArray.push({
             id: scaleId,
-            value: attributeValue.steps.toString()
+            value: attributeValue.steps.join("|")
           });
         }
       } else {
@@ -68,7 +68,7 @@ function getQuestionAttributesInfo(question, index) {
 }
 
 function flattenChoices(choices) {
-  return choices.map((choice) => choice.text).toString();
+	return choices.reduce((previousValue, currentValue) => previousValue + (previousValue ? "|" : "" ) + currentValue.text, "");
 }
 
 function getAttributeValue(name, value){
@@ -76,7 +76,7 @@ function getAttributeValue(name, value){
     return value == "true";
   }
   else if(name == "Choices"){
-    return value.split(",").map((choice) => {
+    return value.split("|").map((choice) => {
       return {
         text: choice
       }
@@ -88,7 +88,7 @@ function getAttributeValue(name, value){
   else if(name.split("_")[0] == "Scale"){
     return {
       name: name.split("_")[1],
-      steps: value.split(",")
+      steps: value.split("|")
     }
   }
 }

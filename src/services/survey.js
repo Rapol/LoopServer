@@ -75,6 +75,12 @@ function getQuestions(req, res, next){
 				// Set attribute property and its value
 				currentQuestion[constants.QUESTION_ATTRIBUTES[questionAttribute.AttributeName]] = questionUtils.getAttributeValue(questionAttribute.AttributeName, questionAttribute.QuestionAttributeValue);
 			});
+
+			// for choices and slider scale
+			recordset[2].forEach((choice) => {
+					questions[choice.QuestionOrder][constants.QUESTION_ATTRIBUTES[choice.AttributeName]] = questionUtils.getAttributeValue(choice.AttributeName, choice.QuestionAttributeValue);
+			});
+
 			var surveyDetails = recordset[0][0];
 			res.send({
 				name: surveyDetails.SurveyName,
@@ -87,7 +93,6 @@ function getQuestions(req, res, next){
 		return next(err)
 	});
 }
-
 
 function postSurvey(req, res, next){
 	let surveyId = null;
@@ -115,6 +120,10 @@ function postSurvey(req, res, next){
 		.catch((err) => {
 			return next(err);
 		});
+}
+
+function answerSurvey(req, res, next){
+	console.log(req.body);
 }
 
 function errorHandler(err, req, res, next){
@@ -206,5 +215,6 @@ export default {
 	getSurvey,
 	getQuestions,
 	postSurvey,
+	answerSurvey,
 	errorHandler
 }
