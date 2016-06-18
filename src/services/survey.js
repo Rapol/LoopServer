@@ -65,7 +65,9 @@ function getQuestions(req, res, next){
 				// Found a new question
 				if (lastId != questionAttribute.QuestionID) {
 					// Create Question and push it to the array of questions
-					currentQuestion = {};
+					currentQuestion = {
+						questionId: questionAttribute.QuestionID
+					};
 					questions.push(currentQuestion);
 					lastId = questionAttribute.QuestionID;
 					// Set Question Type and title for the question
@@ -73,13 +75,17 @@ function getQuestions(req, res, next){
 					currentQuestion.title = questionAttribute.QuestionText;
 				}
 				// Set attribute property and its value
-				currentQuestion[constants.QUESTION_ATTRIBUTES[questionAttribute.AttributeName]] = questionUtils.getAttributeValue(questionAttribute.AttributeName, questionAttribute.QuestionAttributeValue);
+				currentQuestion[constants.QUESTION_ATTRIBUTES[questionAttribute.AttributeName]] = questionUtils.getAttributeValue(questionAttribute);
 			});
-
+			
 			// for choices and slider scale
-			recordset[2].forEach((choice) => {
-					questions[choice.QuestionOrder][constants.QUESTION_ATTRIBUTES[choice.AttributeName]] = questionUtils.getAttributeValue(choice.AttributeName, choice.QuestionAttributeValue);
-			});
+			if(recordset[2].length) {
+				let question = null;
+				recordset[2].forEach((choice) => {
+					question = questions[choice.QuestionOrder];
+					question[constants.QUESTION_ATTRIBUTES[choice.AttributeName]] = questionUtils.getAttributeValue(choice, question[constants.QUESTION_ATTRIBUTES[choice.AttributeName]])
+				});
+			}
 
 			var surveyDetails = recordset[0][0];
 			res.send({
