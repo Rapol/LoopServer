@@ -61,7 +61,7 @@ function signUp(req, res, next) {
 	request.input('LName', sql.VarChar, req.body.lastName);
 	request.input('Email', sql.VarChar, req.body.email);
 	request.input('pswd', sql.VarChar, req.body.password);
-	request.execute('DOB.PROFILE_CREATE')
+	request.execute('DBO.PROFILE_CREATE')
 		.then((recordsets) => {
 			// TODO: check if proc returns profileId
 			let user = {
